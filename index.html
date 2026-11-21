@@ -33,6 +33,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .mc.on span{color:var(--accfg)}
 .hero{margin-top:10px;padding:18px 18px 16px;background:var(--acc);color:var(--accfg);border-radius:24px}
 .hero small{opacity:.8;font-size:14px}
+.hero.p{background:#4A55B8;color:#fff}
 .big{font-size:42px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:2px 0 14px;word-break:break-word}
 .seg{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:rgba(255,255,255,.18)}
 .seg i{display:block;min-width:4px}
@@ -91,11 +92,20 @@ let uid=Date.now();
 function seed(){
   const n=new Date(),k=n.getFullYear()+"-"+pad(n.getMonth()+1)+"-",mx=n.getDate();
   const D=d=>k+pad(Math.max(1,Math.min(d,mx)));
-  const rows=[["i",450000,"Зарплата","Зарплата",1],["e",120000,"Жильё","Аренда",2],["e",15000,"Спорт","Абонемент в зал",3],["e",8500,"Продукты","Магазин у дома",4],["e",3990,"Подписки","Музыка и видео",5],["e",1500,"Транспорт","Такси",6],["e",3200,"Кафе","Обед с коллегами",8],["e",5500,"Личные расходы","Одежда",9],["e",12300,"Продукты","Большая закупка",10],["e",6700,"Здоровье","Аптека",12],["e",9000,"Развлечения","Кино и ужин",14],["e",2400,"Транспорт","Проезд",16],["e",4100,"Кафе","Кофе и десерт",18],["e",7600,"Продукты","Овощи, мясо",20]];
+  const rows=[["i",450000,"Зарплата","Зарплата",1],["e",120000,"Жильё","Аренда",2],["e",15000,"Спорт","Абонемент в зал",3],["e",8500,"Продукты","Магазин у дома",4],["e",3990,"Подписки","Музыка и видео",5],["e",1500,"Транспорт","Такси",6],["e",3200,"Кафе","Обед с коллегами",8],["e",12300,"Продукты","Большая закупка",10],["e",6700,"Здоровье","Аптека",12],["e",9000,"Развлечения","Кино и ужин",14],["e",2400,"Транспорт","Проезд",16],["e",4100,"Кафе","Кофе и десерт",18],["e",7600,"Продукты","Овощи, мясо",20]];
   return {cur:"₸",mode:"f",gb:{f:60000,p:50000},goal:{name:"Отпуск",target:500000,saved:120000},demo:true,tx:rows.map(r=>({id:++uid,type:r[0],amt:r[1],cat:r[2],note:r[3],date:D(r[4])}))};
 }
 function load(){try{const j=localStorage.getItem("fin1");if(j)return JSON.parse(j)}catch(e){}return seed()}
-let S=load();if(!S.gb)S.gb={f:60000,p:50000};if(!S.mode)S.mode="f";if(!S.goal)S.goal={name:"",target:0,saved:0};let YV=0;
+const NG=()=>({name:"",target:0,saved:0});
+function norm(d){
+  if(!d.gb)d.gb={f:60000,p:50000};
+  if(!d.mode)d.mode="f";
+  if(!d.books){d.books={f:{tx:d.tx||[],goal:d.goal||NG()},p:{tx:[],goal:NG()}};delete d.tx;delete d.goal}
+  Object.defineProperty(d,"tx",{configurable:true,get(){return this.books[this.mode].tx},set(v){this.books[this.mode].tx=v}});
+  Object.defineProperty(d,"goal",{configurable:true,get(){return this.books[this.mode].goal},set(v){this.books[this.mode].goal=v}});
+  return d;
+}
+let S=norm(load());let YV=0;
 function save(){try{localStorage.setItem("fin1",JSON.stringify(S))}catch(e){}}
 const now=new Date();
 let V={y:now.getFullYear(),m:now.getMonth(),tab:"ops"};
@@ -112,7 +122,8 @@ function render(){
   const seg=cats.map(([c,v])=>`<i style="flex:${v};background:${CC[c]||"#999"}"></i>`).join("");
   const GC=S.mode==="p"?"Личные расходы":"Продукты",B=S.gb[S.mode]||0,G=by[GC]||0,pct=B?G/B:0,left=B-G;
   let h=`<div class="top"><div class="mon"><button class="ib" data-a="prev" aria-label="Предыдущий месяц">‹</button><button class="mt" data-a="year">${MN[V.m]} ${V.y} ▾</button><button class="ib" data-a="next" aria-label="Следующий месяц">›</button></div><button class="ib" data-a="set" aria-label="Настройки">⚙</button></div>
-  <div class="hero"><small>Расходы за месяц</small><div class="big">${money(E)}</div>
+  <div class="sw" style="margin:12px 0 0"><button class="${S.mode==="f"?"on":""}" data-a="mode" data-v="f">Семейный</button><button class="${S.mode==="p"?"on":""}" data-a="mode" data-v="p">Личный</button></div>
+  <div class="hero${S.mode==="p"?" p":""}"><small>Расходы за месяц</small><div class="big">${money(E)}</div>
   <div class="seg">${seg||""}</div>
   <div class="row2"><div><small>Доходы</small><b>${money(I)}</b></div><div><small>Баланс</small><b>${(I-E<0?"−":"")+money(Math.abs(I-E))}</b></div></div></div>
   <div class="card"><div class="bud"><span>${GC}: потрачено ${money(G)} из</span><b>${B?money(B):"не задан"}</b></div>
@@ -160,7 +171,6 @@ function gsheet(){const g=S.goal;F={};document.getElementById("sh").innerHTML=`<
 function close(){document.getElementById("ov").classList.remove("on");F=null}
 function settings(){
   F={};document.getElementById("sh").innerHTML=`<h3>Настройки</h3>
-  <div class="sw"><button class="${S.mode==="f"?"on":""}" data-a="mode" data-v="f">Семейный</button><button class="${S.mode==="p"?"on":""}" data-a="mode" data-v="p">Личный</button></div>
   <label for="s-b">Бюджет в месяц: ${S.mode==="p"?"личные расходы":"продукты"}</label><input class="in1" id="s-b" inputmode="decimal" value="${S.gb[S.mode]||""}">
   <label for="s-c">Валюта</label><select class="in1" id="s-c">${["₸","₽","$","€"].map(c=>`<option${c===S.cur?" selected":""}>${c}</option>`).join("")}</select>
   <div class="acts"><button class="pri" data-a="sset">Сохранить</button></div>
@@ -196,13 +206,16 @@ document.addEventListener("click",ev=>{
   else if(a==="pm"){V.m=+v;V.y=YV;close();render()}
   else if(a==="goal")gsheet();
   else if(a==="gsave"){const n=i=>parseFloat(document.getElementById(i).value.replace(",","."))||0;S.goal={name:document.getElementById("g-n").value.trim(),target:n("g-t"),saved:n("g-s")};save();close();render()}
-  else if(a==="mode"){rs();S.mode=v;save();settings();render()}
+  else if(a==="mode"){S.mode=v;save();render()}
   else if(a==="exp"){try{const bl=new Blob([JSON.stringify(S)],{type:"application/json"});const u=URL.createObjectURL(bl);const l=document.createElement("a");l.href=u;l.download="rashody-"+today()+".json";document.body.appendChild(l);l.click();l.remove()}catch(e){}}
   else if(a==="cp"){try{navigator.clipboard.writeText(JSON.stringify(S));b.textContent="Скопировано"}catch(e){}}
-  else if(a==="wipe"){S.tx=[];S.demo=false;save();close();render()}
+  else if(a==="wipe"){S.books.f.tx=[];S.books.p.tx=[];S.demo=false;save();close();render()}
 });
-document.addEventListener("change",ev=>{if(ev.target.id!=="s-f")return;const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d.tx)){S=d;save();close();render()}}catch(e){}};r.readAsText(f)});
+document.addEventListener("change",ev=>{if(ev.target.id!=="s-f")return;const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.books||Array.isArray(d.tx)){S=norm(d);save();close();render()}}catch(e){}};r.readAsText(f)});
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+let tx0=null;
+document.addEventListener("touchstart",e=>{if(document.getElementById("ov").classList.contains("on")){tx0=null;return}const t=e.touches[0];tx0={x:t.clientX,y:t.clientY}},{passive:true});
+document.addEventListener("touchend",e=>{if(!tx0)return;const t=e.changedTouches[0],dx=t.clientX-tx0.x,dy=t.clientY-tx0.y;tx0=null;if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6)return;const m=dx<0?"p":"f";if(m!==S.mode){S.mode=m;save();render()}},{passive:true});
 render();
 </script>
 </body>

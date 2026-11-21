@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Мои расходы</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Расходы">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700;800&display=swap">
 <style>
 :root{--bg:#EDF1EE;--sf:#fff;--ink:#142520;--mut:#5F6F69;--line:#D8E0DB;--acc:#17624F;--accfg:#fff;--bad:#C93C32;color-scheme:light;
@@ -20,6 +24,13 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .mon{display:flex;align-items:center;gap:4px;font-weight:700;font-size:18px}
 .ib{width:40px;height:40px;border-radius:50%;font-size:20px;color:var(--mut)}
 .ib:active{background:var(--line)}
+.mt{font-weight:700;font-size:18px;padding:6px 8px;border-radius:10px}
+.gl{display:block;width:100%;text-align:left}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.mc{padding:12px 6px;border-radius:14px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:2px}
+.mc span{font-size:12px;color:var(--mut)}
+.mc.on{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+.mc.on span{color:var(--accfg)}
 .hero{margin-top:10px;padding:18px 18px 16px;background:var(--acc);color:var(--accfg);border-radius:24px}
 .hero small{opacity:.8;font-size:14px}
 .big{font-size:42px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:2px 0 14px;word-break:break-word}
@@ -71,7 +82,7 @@ label{font-size:13px;color:var(--mut);display:block;margin:2px 2px 4px}
 <button class="fab" id="fab" aria-label="Добавить операцию">+ Добавить</button>
 <div class="ov" id="ov"><div class="sh" id="sh" role="dialog" aria-modal="true"></div></div>
 <script>
-const CATS=[["Продукты","#3E8E5A"],["Кафе","#E08A3C"],["Транспорт","#3C7BD6"],["Жильё","#7A5BC7"],["Здоровье","#D6586B"],["Спорт","#1FA39A"],["Развлечения","#C9A227"],["Подписки","#6B7A8F"],["Другое","#9A8F85"]];
+const CATS=[["Продукты","#3E8E5A"],["Кафе","#E08A3C"],["Транспорт","#3C7BD6"],["Жильё","#7A5BC7"],["Здоровье","#D6586B"],["Спорт","#1FA39A"],["Развлечения","#C9A227"],["Подписки","#6B7A8F"],["Личные расходы","#B5651D"],["Другое","#9A8F85"]];
 const CC=Object.fromEntries(CATS);
 const pad=n=>String(n).padStart(2,"0");
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
@@ -80,11 +91,11 @@ let uid=Date.now();
 function seed(){
   const n=new Date(),k=n.getFullYear()+"-"+pad(n.getMonth()+1)+"-",mx=n.getDate();
   const D=d=>k+pad(Math.max(1,Math.min(d,mx)));
-  const rows=[["i",450000,"Зарплата","Зарплата",1],["e",120000,"Жильё","Аренда",2],["e",15000,"Спорт","Абонемент в зал",3],["e",8500,"Продукты","Магазин у дома",4],["e",3990,"Подписки","Музыка и видео",5],["e",1500,"Транспорт","Такси",6],["e",3200,"Кафе","Обед с коллегами",8],["e",12300,"Продукты","Большая закупка",10],["e",6700,"Здоровье","Аптека",12],["e",9000,"Развлечения","Кино и ужин",14],["e",2400,"Транспорт","Проезд",16],["e",4100,"Кафе","Кофе и десерт",18],["e",7600,"Продукты","Овощи, мясо",20]];
-  return {cur:"₸",budget:300000,demo:true,tx:rows.map(r=>({id:++uid,type:r[0],amt:r[1],cat:r[2],note:r[3],date:D(r[4])}))};
+  const rows=[["i",450000,"Зарплата","Зарплата",1],["e",120000,"Жильё","Аренда",2],["e",15000,"Спорт","Абонемент в зал",3],["e",8500,"Продукты","Магазин у дома",4],["e",3990,"Подписки","Музыка и видео",5],["e",1500,"Транспорт","Такси",6],["e",3200,"Кафе","Обед с коллегами",8],["e",5500,"Личные расходы","Одежда",9],["e",12300,"Продукты","Большая закупка",10],["e",6700,"Здоровье","Аптека",12],["e",9000,"Развлечения","Кино и ужин",14],["e",2400,"Транспорт","Проезд",16],["e",4100,"Кафе","Кофе и десерт",18],["e",7600,"Продукты","Овощи, мясо",20]];
+  return {cur:"₸",mode:"f",gb:{f:60000,p:50000},goal:{name:"Отпуск",target:500000,saved:120000},demo:true,tx:rows.map(r=>({id:++uid,type:r[0],amt:r[1],cat:r[2],note:r[3],date:D(r[4])}))};
 }
 function load(){try{const j=localStorage.getItem("fin1");if(j)return JSON.parse(j)}catch(e){}return seed()}
-let S=load();
+let S=load();if(!S.gb)S.gb={f:60000,p:50000};if(!S.mode)S.mode="f";if(!S.goal)S.goal={name:"",target:0,saved:0};let YV=0;
 function save(){try{localStorage.setItem("fin1",JSON.stringify(S))}catch(e){}}
 const now=new Date();
 let V={y:now.getFullYear(),m:now.getMonth(),tab:"ops"};
@@ -99,13 +110,14 @@ function render(){
   const by={};exp.forEach(t=>by[t.cat]=(by[t.cat]||0)+t.amt);
   const cats=Object.entries(by).sort((a,b)=>b[1]-a[1]);
   const seg=cats.map(([c,v])=>`<i style="flex:${v};background:${CC[c]||"#999"}"></i>`).join("");
-  const B=S.budget||0,pct=B?E/B:0,left=B-E;
-  let h=`<div class="top"><div class="mon"><button class="ib" data-a="prev" aria-label="Предыдущий месяц">‹</button>${MN[V.m]} ${V.y}<button class="ib" data-a="next" aria-label="Следующий месяц">›</button></div><button class="ib" data-a="set" aria-label="Настройки">⚙</button></div>
+  const GC=S.mode==="p"?"Личные расходы":"Продукты",B=S.gb[S.mode]||0,G=by[GC]||0,pct=B?G/B:0,left=B-G;
+  let h=`<div class="top"><div class="mon"><button class="ib" data-a="prev" aria-label="Предыдущий месяц">‹</button><button class="mt" data-a="year">${MN[V.m]} ${V.y} ▾</button><button class="ib" data-a="next" aria-label="Следующий месяц">›</button></div><button class="ib" data-a="set" aria-label="Настройки">⚙</button></div>
   <div class="hero"><small>Расходы за месяц</small><div class="big">${money(E)}</div>
   <div class="seg">${seg||""}</div>
   <div class="row2"><div><small>Доходы</small><b>${money(I)}</b></div><div><small>Баланс</small><b>${(I-E<0?"−":"")+money(Math.abs(I-E))}</b></div></div></div>
-  <div class="card"><div class="bud"><span>Бюджет на месяц</span><b>${B?money(B):"не задан"}</b></div>
-  ${B?`<div class="bar${pct>1?" over":""}"><i style="width:${Math.min(100,pct*100)}%"></i></div><div class="bud" style="margin-top:6px"><span>${pct>1?"Перерасход":"Осталось"}</span><b style="color:${pct>1?"var(--bad)":"var(--ink)"}">${money(Math.abs(left))}</b></div>`:""}</div>
+  <div class="card"><div class="bud"><span>${GC}: потрачено ${money(G)} из</span><b>${B?money(B):"не задан"}</b></div>
+  ${B?`<div class="bar${pct>1?" over":""}"><i style="width:${Math.min(100,pct*100)}%"></i></div><div class="bud" style="margin-top:6px"><span>${pct>1?"Перерасход":"Осталось на "+(S.mode==="p"?"личные расходы":"продукты")}</span><b style="color:${pct>1?"var(--bad)":"var(--ink)"}">${money(Math.abs(left))}</b></div>`:""}</div>
+  ${(()=>{const g=S.goal,p=g.target?Math.min(100,g.saved/g.target*100):0;return `<button class="card gl" data-a="goal"><div class="bud"><span>Цель${g.name?": "+esc(g.name):""}</span><b>${g.target?money(g.saved)+" / "+money(g.target):"Задать цель"}</b></div>${g.target?`<div class="bar"><i style="width:${p}%"></i></div>`:""}</button>`})()}
   <div class="tabs"><button class="${V.tab==="ops"?"on":""}" data-a="tab" data-v="ops">Операции</button><button class="${V.tab==="cat"?"on":""}" data-a="tab" data-v="cat">Категории</button></div>`;
   if(V.tab==="cat"){
     h+=cats.length?`<div class="card">`+cats.map(([c,v])=>`<div class="cr"><div class="l"><span><span class="dot" style="display:inline-block;background:${CC[c]||"#999"};margin-right:8px"></span>${esc(c)}</span><b>${money(v)}</b></div><div class="bar"><i style="width:${v/E*100}%;background:${CC[c]||"#999"}"></i></div></div>`).join("")+`</div>`:`<div class="empty">В этом месяце расходов нет.</div>`;
@@ -123,7 +135,7 @@ function render(){
 }
 function sheet(id){
   const t=id?S.tx.find(x=>x.id===id):null;
-  F=t?{...t}:{id:0,type:"e",amt:"",cat:"Продукты",note:"",date:today()};
+  F=t?{...t}:{id:0,type:"e",amt:"",cat:S.mode==="p"?"Личные расходы":"Продукты",note:"",date:today()};
   drawSheet();document.getElementById("ov").classList.add("on");
 }
 function drawSheet(){
@@ -131,18 +143,29 @@ function drawSheet(){
   document.getElementById("sh").innerHTML=`<h3>${F.id?"Изменить операцию":"Новая операция"}</h3>
   <div class="sw"><button class="${e?"on":""}" data-a="type" data-v="e">Расход</button><button class="${e?"":"on"}" data-a="type" data-v="i">Доход</button></div>
   <label for="f-amt">Сумма, ${esc(S.cur)}</label><input class="in1 amtf" id="f-amt" inputmode="decimal" placeholder="0" value="${F.amt}">
-  ${e?`<div class="chips">`+CATS.map(([c,col])=>`<button class="${F.cat===c?"on":""}" data-a="cat" data-v="${c}"><span class="dot" style="background:${col}"></span>${c}</button>`).join("")+`</div>`:""}
+  ${e?`<div class="chips">`+CATS.filter(([c])=>c!==(S.mode==="p"?"Продукты":"Личные расходы")).map(([c,col])=>`<button class="${F.cat===c?"on":""}" data-a="cat" data-v="${c}"><span class="dot" style="background:${col}"></span>${c}</button>`).join("")+`</div>`:""}
   <label for="f-note">Заметка</label><input class="in1" id="f-note" placeholder="Например, обед" value="${esc(F.note)}">
   <label for="f-date">Дата</label><input class="in1" id="f-date" type="date" value="${F.date}">
   <div class="acts">${F.id?`<button class="dng" data-a="del">Удалить</button>`:`<button class="dng" style="border-color:var(--line);color:var(--mut)" data-a="close">Отмена</button>`}<button class="pri" data-a="save">${F.id?"Сохранить":"Добавить"}</button></div>`;
 }
 function readF(){const g=i=>document.getElementById(i);if(g("f-amt")){F.amt=g("f-amt").value;F.note=g("f-note").value;F.date=g("f-date").value||today()}}
+function rs(){const b=document.getElementById("s-b");if(b){S.gb[S.mode]=parseFloat(b.value.replace(",","."))||0;S.cur=document.getElementById("s-c").value}}
+function ysheet(){
+  F={};
+  const mm=Array.from({length:12},(_,i)=>{const k=YV+"-"+pad(i+1);const s=S.tx.filter(t=>t.type==="e"&&t.date.startsWith(k)).reduce((a,t)=>a+t.amt,0);return `<button class="mc${YV===V.y&&i===V.m?" on":""}" data-a="pm" data-v="${i}"><b>${MN[i].slice(0,3)}</b><span>${s?(s>=1000?Math.round(s/1000)+"\u00A0тыс":Math.round(s)):"—"}</span></button>`}).join("");
+  document.getElementById("sh").innerHTML=`<div class="top"><button class="ib" data-a="py" data-v="-1" aria-label="Предыдущий год">‹</button><h3 style="margin:0">${YV}</h3><button class="ib" data-a="py" data-v="1" aria-label="Следующий год">›</button></div><div class="mg">${mm}</div>`;
+  document.getElementById("ov").classList.add("on");
+}
+function gsheet(){const g=S.goal;F={};document.getElementById("sh").innerHTML=`<h3>Цель</h3><label for="g-n">Название</label><input class="in1" id="g-n" placeholder="Например, отпуск" value="${esc(g.name)}"><label for="g-t">Нужная сумма, ${esc(S.cur)}</label><input class="in1" id="g-t" inputmode="decimal" value="${g.target||""}"><label for="g-s">Уже накоплено, ${esc(S.cur)}</label><input class="in1" id="g-s" inputmode="decimal" value="${g.saved||""}"><div class="acts"><button class="pri" data-a="gsave">Сохранить</button></div>`;document.getElementById("ov").classList.add("on")}
 function close(){document.getElementById("ov").classList.remove("on");F=null}
 function settings(){
   F={};document.getElementById("sh").innerHTML=`<h3>Настройки</h3>
-  <label for="s-b">Бюджет на месяц</label><input class="in1" id="s-b" inputmode="decimal" value="${S.budget||""}">
+  <div class="sw"><button class="${S.mode==="f"?"on":""}" data-a="mode" data-v="f">Семейный</button><button class="${S.mode==="p"?"on":""}" data-a="mode" data-v="p">Личный</button></div>
+  <label for="s-b">Бюджет в месяц: ${S.mode==="p"?"личные расходы":"продукты"}</label><input class="in1" id="s-b" inputmode="decimal" value="${S.gb[S.mode]||""}">
   <label for="s-c">Валюта</label><select class="in1" id="s-c">${["₸","₽","$","€"].map(c=>`<option${c===S.cur?" selected":""}>${c}</option>`).join("")}</select>
   <div class="acts"><button class="pri" data-a="sset">Сохранить</button></div>
+  <div class="acts" style="margin-top:14px"><button class="pri" style="background:var(--line);color:var(--ink)" data-a="exp">Скачать копию</button><button class="pri" style="background:var(--line);color:var(--ink)" data-a="cp">Скопировать</button></div>
+  <label for="s-f" style="margin-top:12px">Восстановить из файла копии</label><input class="in1" id="s-f" type="file" accept=".json,application/json">
   <button class="lnk" data-a="wipe">Удалить все данные, включая примеры</button>`;
   document.getElementById("ov").classList.add("on");
 }
@@ -167,9 +190,19 @@ document.addEventListener("click",ev=>{
     save();close();render();
   }
   else if(a==="del"){S.tx=S.tx.filter(x=>x.id!==F.id);save();close();render()}
-  else if(a==="sset"){S.budget=parseFloat(document.getElementById("s-b").value.replace(",","."))||0;S.cur=document.getElementById("s-c").value;save();close();render()}
+  else if(a==="sset"){rs();save();close();render()}
+  else if(a==="year"){YV=V.y;ysheet()}
+  else if(a==="py"){YV+=+v;ysheet()}
+  else if(a==="pm"){V.m=+v;V.y=YV;close();render()}
+  else if(a==="goal")gsheet();
+  else if(a==="gsave"){const n=i=>parseFloat(document.getElementById(i).value.replace(",","."))||0;S.goal={name:document.getElementById("g-n").value.trim(),target:n("g-t"),saved:n("g-s")};save();close();render()}
+  else if(a==="mode"){rs();S.mode=v;save();settings();render()}
+  else if(a==="exp"){try{const bl=new Blob([JSON.stringify(S)],{type:"application/json"});const u=URL.createObjectURL(bl);const l=document.createElement("a");l.href=u;l.download="rashody-"+today()+".json";document.body.appendChild(l);l.click();l.remove()}catch(e){}}
+  else if(a==="cp"){try{navigator.clipboard.writeText(JSON.stringify(S));b.textContent="Скопировано"}catch(e){}}
   else if(a==="wipe"){S.tx=[];S.demo=false;save();close();render()}
 });
+document.addEventListener("change",ev=>{if(ev.target.id!=="s-f")return;const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d.tx)){S=d;save();close();render()}}catch(e){}};r.readAsText(f)});
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 render();
 </script>
 </body>
